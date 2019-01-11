@@ -1,9 +1,7 @@
 FROM ubuntu:18.04
 LABEL maintainer="Markus Krogh <markus@nordu.net>"
-RUN apt-get -q update && apt-get -y upgrade && apt-get install -y screen varnish xinetd python python-jinja2 python-yaml
+RUN apt-get -q update && apt-get -y upgrade && apt-get install -y varnish python3 python3-jinja2 python3-yaml
 ADD settings /etc/default/varnish
-ADD monitor.sh /etc/varnish/monitor.sh
-ADD varnish-monitor /etc/xinetd.d/varnish-monitor
 ADD gen-vcl.py /gen-vcl.py
 ADD vcl.j2 /vcl.j2
 ENV CONFIG ""

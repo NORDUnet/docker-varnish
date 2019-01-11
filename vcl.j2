@@ -1,33 +1,14 @@
 vcl 4.0;
 
-{% for name,members in backends|dictsort %}
-
-director {{ name }} round-robin {
-{% for member in members|sort %}{%set uri = uris[member] %}
-  {
-     .backend = {
-       .host = "{{ uri.hostname }}";
-{% if name in vhosts %}       .host_header = "{{ vhosts[name] }}"; {% endif %}
-       .port = "{{ uri.port if uri.port != None else 80 }}";
-       .probe = {
-         .url = "{{ uri.path }}";
-         .timeout = 30s;
-         .interval = 10s;
-         .threshold = 3;
-       }
-     }
+backend default {
+  .host = "{{ backend.hostname }}";
+  .port = "{{ backend.port if backend.port != None else 80 }}";
+  .probe = {
+    .url = "{{ backend.path }}";
+    .timeout = 30s;
+    .interval = 10s;
+    .threshold = 3;
   }
-{% endfor %}
-}
-
-{% endfor %}
-
-backend status {
-   .host = "localhost";
-   .port = "10999";
-   .connect_timeout = 10s;
-   .first_byte_timeout = 10s;
-   .between_bytes_timeout = 10s;
 }
 
 sub normalize_req_url {
@@ -41,79 +22,21 @@ sub normalize_req_url {
     set req.url = regsub(req.url, "(\?&?)$", "");
 }
 
-acl purge {
-        "localhost";
-}
-
-sub vcl_recv_purge {
-        if (req.request == "PURGE") {
-                if (!client.ip ~ purge) {
-                        error 405 "Not allowed.";
-                }
-                return (lookup);
-        }
-}
-
-sub vcl_hit_purge {
-        if (req.request == "PURGE") {
-                purge;
-                error 200 "Purged.";
-        }
-}
-
-sub vcl_hit {
-  call vcl_hit_purge;
-}
-
-sub vcl_miss_purge {
-        if (req.request == "PURGE") {
-                purge;
-                error 200 "Purged.";
-        }
-}
-
-sub vcl_miss {
-  call vcl_miss_purge;
-}
-
 sub vcl_recv {
-  call vcl_recv_purge;
 
   unset req.http.cookie;
-{% if default_backend %}
-  set req.backend = {{ default_backend }};
-{% endif %}
-  set req.grace = 1h;
-
-  if (req.http.host == "varnish-monitor") {
-    set req.backend = status;
-  }
+  set req.http.grace = 1h;
 
 {% for path in forbidden_paths %}
   if (req.url ~ "{{ path }}") {
-    error 403 "Forbidden";
+    synth(403, "Forbidden");
   }
 {% endfor %}
-
-{% for name,members in backends|dictsort %}
-{% if (not acme_backend) or (name != acme_backend) %}
-  if (req.http.host == "{{ name }}.{{ domain }}"{% if name in vhosts %} || req.http.host == "{{ vhosts[name] }}"{% endif %}) {
-    set req.http.host = "{{ vhosts[name] }}";
-    set req.backend = {{ name }};
-  }
-{% endif %}
-{% endfor %}
-
-{% if acme_backend %}
-  if (req.url ~ "^/.well-known/acme-challenge/") {
-    set req.backend = {{ acme_backend }};
-  }
-{% endif %}
 
   call normalize_req_url;
 }
 
-sub vcl_fetch {
+sub vcl_backend_response {
   set beresp.grace = 1h;
   set beresp.do_stream = true;
   if (beresp.http.content-type ~ "text" || beresp.http.content-type ~ "xml" || beresp.http.content-type ~ "javascript") {
@@ -121,8 +44,5 @@ sub vcl_fetch {
   }
   if (beresp.status == 404) { 
      set beresp.ttl = 10s; 
-  }
-  if (beresp.ttl < 120s) {
-   set beresp.ttl = 120s;
   }
 }
