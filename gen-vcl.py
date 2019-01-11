@@ -29,7 +29,7 @@ elif 'BACKEND_PORT' in os.environ:
         'backend': {
             'hostname': uri.hostname,
             'port': uri.port,
-            'probe': uri.path,
+            'path': uri.path,
         }
     }
 else:

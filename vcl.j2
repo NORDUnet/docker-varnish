@@ -29,7 +29,7 @@ sub vcl_recv {
 
 {% for path in forbidden_paths %}
   if (req.url ~ "{{ path }}") {
-    synth(403, "Forbidden");
+    return (synth(403, "Forbidden"));
   }
 {% endfor %}
 
