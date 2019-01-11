@@ -41,4 +41,8 @@ for name,members in data['backends'].iteritems():
     for member in members:
         data['uris'][member] = urlparse(member)
 
+data['forbidden_paths'] = []
+if 'FORBIDDEN_PATHS' in os.environ:
+    data['forbidden_paths'] = [p.strip() for p in os.environ['FORBIDDEN_PATHS'].split(';')]
+
 _render(data)

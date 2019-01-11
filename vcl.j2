@@ -88,6 +88,12 @@ sub vcl_recv {
     set req.backend = status;
   }
 
+{% for path in forbidden_paths %}
+  if (req.url ~ "{{ path }}") {
+    error 403 "Forbidden";
+  }
+{% endif %}
+
 {% for name,members in backends|dictsort %}
 {% if (not acme_backend) or (name != acme_backend) %}
   if (req.http.host == "{{ name }}.{{ domain }}"{% if name in vhosts %} || req.http.host == "{{ vhosts[name] }}"{% endif %}) {
