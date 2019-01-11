@@ -92,7 +92,7 @@ sub vcl_recv {
   if (req.url ~ "{{ path }}") {
     error 403 "Forbidden";
   }
-{% endif %}
+{% endfor %}
 
 {% for name,members in backends|dictsort %}
 {% if (not acme_backend) or (name != acme_backend) %}
