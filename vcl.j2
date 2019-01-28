@@ -97,6 +97,12 @@ sub vcl_recv {
 {% endif %}
 {% endfor %}
 
+{% for path in forbidden_paths %}
+  if (req.url ~ "{{ path }}") {
+    error 403 "Forbidden";
+  }
+{% endfor %}
+
 {% if acme_backend %}
   if (req.url ~ "^/.well-known/acme-challenge/") {
     set req.backend = {{ acme_backend }};

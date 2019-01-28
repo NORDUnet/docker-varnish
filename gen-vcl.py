@@ -4,6 +4,7 @@ from jinja2 import Template
 import yaml
 import sys
 import os
+import re
 from urlparse import urlparse
 
 def _render(d):
@@ -40,5 +41,8 @@ data['uris'] = dict()
 for name,members in data['backends'].iteritems():
     for member in members:
         data['uris'][member] = urlparse(member)
+
+if 'FORBIDDEN_PATHS' in os.environ:
+    data['forbidden_paths'] = [p.strip() for p in re.split('[;,]', os.environ['FORBIDDEN_PATHS'])]
 
 _render(data)
