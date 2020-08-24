@@ -37,6 +37,11 @@ sub normalize_req_url {
     if(req.url ~ "(\?|&)(gclid|cx|ie|cof|siteurl|zanpid|origin|utm_[a-z]+|mr:[A-z]+)=") {
         set req.url = regsuball(req.url, "(gclid|cx|ie|cof|siteurl|zanpid|origin|utm_[a-z]+|mr:[A-z]+)=[%.-_A-z0-9]+&?", "");
     }
+
+    if (req.url ~ "(\?|&)return=") {
+        set req.url = regsuball(req.url, "return=[^&]+&?", "");
+    }
+
     set req.url = regsub(req.url, "(\?&?)$", "");
 }
 
