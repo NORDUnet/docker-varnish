@@ -18,13 +18,13 @@ if len(sys.argv) == 3:
      with open(sys.argv[2]) as config:
          data = yaml.load(config.read())
 elif 'BACKEND_PORT' in os.environ:
-    backend_uri = os.environ['BACKEND_PORT']
-    backend_uri = backend_uri.replace("tcp://","http://")
-    if not backend_uri.endswith("/"):
-        backend_uri = "%s/" % backend_uri
-    public_name = 'localhost'
-    backends=dict(backend=[backend_uri])
-    data = dict(domain='localdomain',vhosts=dict(),default_backend='backend')
+    backends = {'backend': []}
+    for backend_uri in os.environ['BACKEND_PORT'].split():
+        backend_uri = backend_uri.replace("tcp://", "http://")
+        if not backend_uri.endswith("/"):
+            backend_uri = "%s/" % backend_uri
+        backends['backend'].append(backend_uri)
+    data = dict(domain='localdomain', vhosts=dict(), default_backend='backend')
     if 'ACME_PORT' in os.environ:
        acme_uri = os.environ['ACME_PORT']
        acme_uri = acme_uri.replace("tcp://","http://")
